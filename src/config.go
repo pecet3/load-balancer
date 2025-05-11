@@ -13,6 +13,7 @@ type ConfigServer struct {
 
 type Config struct {
 	Port           int             `yaml:"port"`
+	IsRoundRobin   bool            `yaml:"isRoundRobin"`
 	StatusInterval int             `yaml:"statusInterval"`
 	Servers        []*ConfigServer `yaml:"servers"`
 }

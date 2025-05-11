@@ -7,20 +7,15 @@ import (
 	"sync/atomic"
 )
 
-var backendURLs = []string{
-	"http://localhost:8083",
-	"http://localhost:8082",
+var current uint32
+
+func (c *core) getNextBackend() string {
+	index := atomic.AddUint32(&current, 1)
+	return c.urls[(int(index)-1)%len(c.urls)]
 }
 
-var current uint64
-
-func getNextBackend() string {
-	index := atomic.AddUint64(&current, 1)
-	return backendURLs[(int(index)-1)%len(backendURLs)]
-}
-
-func handler(w http.ResponseWriter, r *http.Request) {
-	targetURL, err := url.Parse(getNextBackend())
+func (c *core) handlerRoundRobin(w http.ResponseWriter, r *http.Request) {
+	targetURL, err := url.Parse(c.getNextBackend())
 	if err != nil {
 		http.Error(w, "", http.StatusInternalServerError)
 		return
