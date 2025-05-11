@@ -5,6 +5,10 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"time"
+
+	"github.com/shirou/gopsutil/v3/process"
 )
 
 func main() {
@@ -38,9 +42,29 @@ func main() {
 		fmt.Fprint(w, "OK")
 	})
 
+	go func() {
+		for {
+			time.Sleep(time.Second * 1)
+			GetCPUUsage()
+		}
+	}()
+
 	addr := fmt.Sprintf(":%s", *port)
 	log.Printf("Starting server '%s' on port %s...\n", *name, *port)
 	if err := http.ListenAndServe(addr, nil); err != nil {
 		log.Fatalf("Server error: %v", err)
 	}
+}
+
+func GetCPUUsage() (float64, error) {
+	pid := os.Getpid()
+	proc, err := process.NewProcess(int32(pid))
+	if err != nil {
+		return 0, err
+	}
+	percent, err := proc.CPUPercent()
+	if err != nil {
+		return 0, err
+	}
+	return percent, nil
 }

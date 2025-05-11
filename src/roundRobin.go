@@ -28,3 +28,18 @@ func (c *core) handlerRoundRobin(w http.ResponseWriter, r *http.Request) {
 	}
 	proxy.ServeHTTP(w, r)
 }
+func (c *core) handlerRoundRobinWithLogs(w http.ResponseWriter, r *http.Request) {
+	go c.db.AddRequest(r)
+	targetURL, err := url.Parse(c.getNextBackend())
+	if err != nil {
+		http.Error(w, "", http.StatusInternalServerError)
+		return
+	}
+
+	proxy := httputil.NewSingleHostReverseProxy(targetURL)
+	r.Host = targetURL.Host
+	proxy.ErrorHandler = func(rw http.ResponseWriter, req *http.Request, err error) {
+		http.Error(rw, err.Error(), http.StatusBadGateway)
+	}
+	proxy.ServeHTTP(w, r)
+}
