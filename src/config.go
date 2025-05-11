@@ -13,7 +13,6 @@ type ConfigServer struct {
 
 type Config struct {
 	Port           int             `yaml:"port"`
-	IsRoundRobin   bool            `yaml:"isRoundRobin"`
 	IsDbLogging    bool            `yaml:"isDbLogging"`
 	StatusInterval int             `yaml:"statusInterval"`
 	Servers        []*ConfigServer `yaml:"servers"`

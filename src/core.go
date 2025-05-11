@@ -10,14 +10,15 @@ type server struct {
 	url       string
 	statusURL string
 	isDown    bool
-	cpuUsage  float64
+	score     float64
 }
 
 type core struct {
-	cfg     *Config
-	urls    []string
-	servers []*server
-	db      *DB
+	cfg             *Config
+	urls            []string
+	servers         []*server
+	currentSrvIndex uint32
+	db              *DB
 }
 
 func NewCore(cfg *Config) *core {
@@ -29,7 +30,7 @@ func NewCore(cfg *Config) *core {
 			url:       srv.URL,
 			statusURL: srv.StatusURL,
 			isDown:    false,
-			cpuUsage:  0,
+			score:     0,
 		})
 	}
 	var db *DB
@@ -51,16 +52,15 @@ func NewCore(cfg *Config) *core {
 }
 
 func (c *core) RunLoadBalancer() {
-	log.Println("Listening on: ", c.cfg.Port)
+	go c.getCurrentSrvIndexLoop()
 
-	if c.cfg.IsRoundRobin {
-		if c.cfg.IsDbLogging {
-			http.HandleFunc("/", c.handlerRoundRobinWithLogs)
-		} else {
-			http.HandleFunc("/", c.handlerRoundRobin)
-		}
+	if c.cfg.IsDbLogging {
+		http.HandleFunc("/", c.handlerScoreBasedWithLogs)
+	} else {
+		http.HandleFunc("/", c.handlerScoreBased)
 	}
 
+	log.Println("Listening on: ", c.cfg.Port)
 	addr := ":" + strconv.Itoa(c.cfg.Port)
 	if err := http.ListenAndServe(addr, nil); err != nil {
 		log.Fatalln("Server error: ", err)

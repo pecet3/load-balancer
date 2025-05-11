@@ -1,12 +1,12 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
-	"time"
 
 	"github.com/shirou/gopsutil/v3/process"
 )
@@ -37,17 +37,21 @@ func main() {
 		fmt.Fprint(w, html)
 	})
 
-	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/api/statusz", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		fmt.Fprint(w, "OK")
-	})
-
-	go func() {
-		for {
-			time.Sleep(time.Second * 1)
-			GetCPUUsage()
+		status, err := GetStatus()
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
 		}
-	}()
+
+		w.WriteHeader(http.StatusOK)
+		err = json.NewEncoder(w).Encode(status)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+	})
 
 	addr := fmt.Sprintf(":%s", *port)
 	log.Printf("Starting server '%s' on port %s...\n", *name, *port)
@@ -56,15 +60,28 @@ func main() {
 	}
 }
 
-func GetCPUUsage() (float64, error) {
+type Status struct {
+	CPU    float64 `json:"cpu"`
+	Memory float32 `json:"memory"`
+}
+
+func GetStatus() (*Status, error) {
 	pid := os.Getpid()
 	proc, err := process.NewProcess(int32(pid))
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
-	percent, err := proc.CPUPercent()
+	cpu, err := proc.CPUPercent()
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
-	return percent, nil
+	mem, err := proc.MemoryPercent()
+	if err != nil {
+		return nil, err
+	}
+	status := &Status{
+		CPU:    cpu,
+		Memory: mem,
+	}
+	return status, nil
 }

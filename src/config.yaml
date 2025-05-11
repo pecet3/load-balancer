@@ -1,8 +1,8 @@
 port: 8080
-statusInterval: 10
-isRoundRobin: true
+statusInterval: 5000
+isDbLogging: false
 servers:
   - url: "http://localhost:8082"
-    statusURL: "http://localhost:8082/api/status"
+    statusURL: "http://localhost:8082/api/statusz"
   - url: "http://localhost:8083"
-    statusURL: "http://localhost:8082/api/status"
+    statusURL: "http://localhost:8083/api/statusz"

@@ -22,7 +22,7 @@ func NewDB() (*DB, error) {
 	}
 
 	createTableQuery := `
-	CREATE TABLE IF NOT EXISTS requests_logs (
+	CREATE TABLE IF NOT EXISTS requests (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		ip TEXT NOT NULL,
 		body TEXT NOT NULL,
@@ -48,7 +48,7 @@ func (db DB) AddRequest(req *http.Request) {
 	bodyStr := string(bodyBytes)
 
 	insertQuery := `
-	INSERT INTO requests_logs (ip, body, url, created_at)
+	INSERT INTO requests (ip, body, url, created_at)
 	VALUES (?, ?, ?, ?);
 	`
 	_, err = db.d.Exec(insertQuery, getIP(req), bodyStr, req.URL.Path, time.Now())
