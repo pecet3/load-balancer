@@ -6,33 +6,14 @@ import (
 	"strconv"
 )
 
-type server struct {
-	url       string
-	statusURL string
-	isDown    bool
-	score     float64
-}
-
 type core struct {
 	cfg             *Config
 	urls            []string
-	servers         []*server
 	currentSrvIndex uint32
 	db              *DB
 }
 
 func NewCore(cfg *Config) *core {
-	var urls []string
-	var servers []*server
-	for _, srv := range cfg.Servers {
-		urls = append(urls, srv.URL)
-		servers = append(servers, &server{
-			url:       srv.URL,
-			statusURL: srv.StatusURL,
-			isDown:    false,
-			score:     0,
-		})
-	}
 	var db *DB
 	if cfg.IsDbLogging {
 		if ndb, err := NewDB(); err == nil {
@@ -44,10 +25,8 @@ func NewCore(cfg *Config) *core {
 		db = nil
 	}
 	return &core{
-		cfg:     cfg,
-		urls:    urls,
-		servers: servers,
-		db:      db,
+		cfg: cfg,
+		db:  db,
 	}
 }
 

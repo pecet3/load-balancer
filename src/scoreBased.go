@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
-	"sync/atomic"
 	"time"
 )
 
@@ -17,7 +16,7 @@ type Status struct {
 }
 
 func (c *core) handlerScoreBased(w http.ResponseWriter, r *http.Request) {
-	targetURL, err := url.Parse(c.servers[c.currentSrvIndex].url)
+	targetURL, err := url.Parse(c.cfg.Servers[c.currentSrvIndex].URL)
 	if err != nil {
 		http.Error(w, "", http.StatusInternalServerError)
 		return
@@ -39,9 +38,9 @@ func (c *core) getCurrentSrvIndexLoop() {
 		time.Sleep(time.Millisecond * time.Duration(c.cfg.StatusInterval))
 		index := 0
 		highestScore := 1e9
-		for i, srv := range c.servers {
+		for i, srv := range c.cfg.Servers {
 			status := &Status{}
-			resp, err := http.Get(srv.statusURL)
+			resp, err := http.Get(srv.StatusURL)
 			if err != nil {
 				log.Println(err)
 				continue
@@ -58,8 +57,10 @@ func (c *core) getCurrentSrvIndexLoop() {
 				highestScore = srvScore
 				index = i
 			}
-			log.Println(status)
+			if c.cfg.IsDbLogging {
+				go c.db.AddStatus(srv.URL, status.CPU, status.Memory)
+			}
 		}
-		atomic.SwapUint32(&c.currentSrvIndex, uint32(index))
+		c.currentSrvIndex = uint32(index)
 	}
 }

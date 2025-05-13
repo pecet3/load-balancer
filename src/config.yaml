@@ -1,6 +1,6 @@
 port: 8080
 statusInterval: 5000
-isDbLogging: false
+isDbLogging: true
 servers:
   - url: "http://localhost:8082"
     statusURL: "http://localhost:8082/api/statusz"
