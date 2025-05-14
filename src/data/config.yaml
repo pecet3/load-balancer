@@ -1,0 +1,9 @@
+port: 8080
+statusInterval: 5000 #ms
+isDbLogging: true
+servers:
+  - URL: "http://localhost:8082"
+    statusURL: "http://localhost:8082/api/statusz"
+    isWsCandidate: true
+  - URL: "http://localhost:8083"
+    statusURL: "http://localhost:8083/api/statusz"

@@ -7,8 +7,9 @@ import (
 )
 
 type ConfigServer struct {
-	URL       string `yaml:"url"`
-	StatusURL string `yaml:"statusURL"`
+	URL           string `yaml:"URL"`
+	StatusURL     string `yaml:"statusURL"`
+	IsWsCandidate bool   `yaml:"isWsCandidate"`
 }
 
 type Config struct {
@@ -19,7 +20,7 @@ type Config struct {
 }
 
 func GetConfig() (*Config, error) {
-	data, err := os.ReadFile("config.yaml")
+	data, err := os.ReadFile("data/config.yaml")
 	if err != nil {
 		data, err = os.ReadFile("config.yml")
 		if err != nil {

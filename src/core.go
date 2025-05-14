@@ -7,10 +7,11 @@ import (
 )
 
 type core struct {
-	cfg             *Config
-	urls            []string
-	currentSrvIndex uint32
-	db              *DB
+	cfg               *Config
+	currentSrvIndex   int
+	currentWsSrvIndex int
+	isWsSrv           bool
+	db                *DB
 }
 
 func NewCore(cfg *Config) *core {
@@ -24,19 +25,35 @@ func NewCore(cfg *Config) *core {
 	} else {
 		db = nil
 	}
+	isWsSrv := false
+	for _, srv := range cfg.Servers {
+		if srv.IsWsCandidate {
+			isWsSrv = true
+			break
+		}
+	}
 	return &core{
-		cfg: cfg,
-		db:  db,
+		cfg:     cfg,
+		db:      db,
+		isWsSrv: isWsSrv,
 	}
 }
 
 func (c *core) RunLoadBalancer() {
 	go c.getCurrentSrvIndexLoop()
 
-	if c.cfg.IsDbLogging {
-		http.HandleFunc("/", c.handlerScoreBasedWithLogs)
+	if c.isWsSrv {
+		if c.cfg.IsDbLogging {
+			http.HandleFunc("/", c.handlerWsWithLogs)
+		} else {
+			http.HandleFunc("/", c.handlerWs)
+		}
 	} else {
-		http.HandleFunc("/", c.handlerScoreBased)
+		if c.cfg.IsDbLogging {
+			http.HandleFunc("/", c.handlerWithLogs)
+		} else {
+			http.HandleFunc("/", c.handler)
+		}
 	}
 
 	log.Println("Listening on: ", c.cfg.Port)

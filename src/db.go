@@ -2,9 +2,7 @@ package main
 
 import (
 	"database/sql"
-	"io"
 	"log"
-	"net"
 	"net/http"
 	"os"
 	"time"
@@ -17,12 +15,12 @@ type DB struct {
 }
 
 func NewDB() (*DB, error) {
-	err := os.MkdirAll("database", os.ModePerm)
+	err := os.MkdirAll("data/database", os.ModePerm)
 	if err != nil {
 		return nil, err
 	}
 
-	db, err := sql.Open("sqlite3", "file:database/store.db?_journal_mode=WAL")
+	db, err := sql.Open("sqlite3", "file:data/database/store.db?_journal_mode=WAL")
 	if err != nil {
 		return nil, err
 	}
@@ -31,8 +29,8 @@ func NewDB() (*DB, error) {
 	CREATE TABLE IF NOT EXISTS requests (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		ip TEXT NOT NULL,
-		body TEXT NOT NULL,
-		url TEXT NOT NULL,
+		path TEXT NOT NULL,
+		is_websocket BOOL NOT NULL,
 		created_at DATETIME NOT NULL
 	);
 	`
@@ -55,57 +53,24 @@ func NewDB() (*DB, error) {
 
 	return &DB{d: db}, nil
 }
-func (db DB) AddStatus(url string, cpu float64, memory float64) {
+func (db DB) AddStatus(path string, cpu float64, memory float64) {
 	insertQuery := `
-	INSERT INTO statuses (url, cpu, memory, created_at)
+	INSERT INTO statuses (path, cpu, memory, created_at)
 	VALUES (?, ?, ?, ?);
 	`
-	_, err := db.d.Exec(insertQuery, url, cpu, memory, time.Now())
+	_, err := db.d.Exec(insertQuery, path, cpu, memory, time.Now())
 	if err != nil {
 		log.Println(err)
 	}
 }
 func (db DB) AddRequest(req *http.Request) {
-	bodyBytes, err := io.ReadAll(req.Body)
-	if err != nil {
-		log.Println(err)
-	}
-	defer req.Body.Close()
-
-	bodyStr := string(bodyBytes)
-
 	insertQuery := `
-	INSERT INTO requests (ip, body, url, created_at)
+	INSERT INTO requests (ip, url, created_at, is_websocket)
 	VALUES (?, ?, ?, ?);
 	`
-	_, err = db.d.Exec(insertQuery, getIP(req), bodyStr, req.URL.Path, time.Now())
+	_, err := db.d.Exec(insertQuery, getIP(req),
+		req.URL.Path, time.Now(), isWebSocketRequest(req))
 	if err != nil {
 		log.Println(err)
 	}
-}
-
-func getIP(r *http.Request) string {
-	xri := r.Header.Get("X-Real-Ip")
-	if xri != "" {
-		ip := xri
-		if idx := net.ParseIP(ip); idx != nil {
-			return ip
-		}
-	}
-	xff := r.Header.Get("X-Forwarded-For")
-	if xff != "" {
-		ip := xff
-		if idx := net.ParseIP(ip); idx != nil {
-			return ip
-		}
-	}
-	ip, _, err := net.SplitHostPort(r.RemoteAddr)
-	if err != nil {
-		return ""
-	}
-	userIP := net.ParseIP(ip)
-	if userIP == nil {
-		return ""
-	}
-	return userIP.String()
 }
