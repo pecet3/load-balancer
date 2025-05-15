@@ -14,13 +14,13 @@ type ConfigServer struct {
 
 type Config struct {
 	Port           int             `yaml:"port"`
-	IsDbLogging    bool            `yaml:"isDbLogging"`
 	StatusInterval int             `yaml:"statusInterval"`
 	Servers        []*ConfigServer `yaml:"servers"`
+	LogBuffSize    int             `yaml:"loggerBufferSize"`
 }
 
 func GetConfig() (*Config, error) {
-	data, err := os.ReadFile("data/config.yaml")
+	data, err := os.ReadFile("cfg/config.yaml")
 	if err != nil {
 		data, err = os.ReadFile("config.yml")
 		if err != nil {
@@ -31,6 +31,9 @@ func GetConfig() (*Config, error) {
 	err = yaml.Unmarshal(data, cfg)
 	if err != nil {
 		return nil, err
+	}
+	if cfg.LogBuffSize <= 0 {
+		cfg.LogBuffSize = 100
 	}
 	return cfg, nil
 }

@@ -12,6 +12,8 @@ import (
 	"github.com/shirou/gopsutil/v3/process"
 )
 
+// go run . --port 8083 --name "server 2"
+
 var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
 		return true // w prostych testach pozwól na dowolne połączenia

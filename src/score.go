@@ -16,46 +16,43 @@ type Status struct {
 }
 
 func (c *core) handler(w http.ResponseWriter, r *http.Request) {
+	c.logChan <- r
 	targetURL, err := url.Parse(c.cfg.Servers[c.currentSrvIndex].URL)
 	if err != nil {
+		log.Println(getErr(r, err))
 		http.Error(w, "", http.StatusInternalServerError)
 		return
 	}
 	proxy := httputil.NewSingleHostReverseProxy(targetURL)
 	r.Host = targetURL.Host
 	proxy.ErrorHandler = func(rw http.ResponseWriter, req *http.Request, err error) {
+		log.Println(getErr(r, err))
 		http.Error(rw, err.Error(), http.StatusBadGateway)
 	}
 	proxy.ServeHTTP(w, r)
-}
-func (c *core) handlerWithLogs(w http.ResponseWriter, r *http.Request) {
-	go c.db.AddRequest(r)
-	c.handler(w, r)
 }
 
 // WEBSOCKETS
 
 func (c *core) handlerWs(w http.ResponseWriter, r *http.Request) {
+	c.logChan <- r
 	srvUrl := c.cfg.Servers[c.currentSrvIndex].URL
 	if isWebSocketRequest(r) {
 		srvUrl = c.cfg.Servers[c.currentWsSrvIndex].URL
-		log.Println("ws")
 	}
 	targetURL, err := url.Parse(srvUrl)
 	if err != nil {
+		log.Println(getErr(r, err))
 		http.Error(w, "", http.StatusInternalServerError)
 		return
 	}
 	proxy := httputil.NewSingleHostReverseProxy(targetURL)
 	r.Host = targetURL.Host
 	proxy.ErrorHandler = func(rw http.ResponseWriter, req *http.Request, err error) {
+		log.Println(getErr(r, err))
 		http.Error(rw, err.Error(), http.StatusBadGateway)
 	}
 	proxy.ServeHTTP(w, r)
-}
-func (c *core) handlerWsWithLogs(w http.ResponseWriter, r *http.Request) {
-	go c.db.AddRequest(r)
-	c.handlerWs(w, r)
 }
 
 // loop
@@ -91,10 +88,7 @@ func (c *core) getCurrentSrvIndexLoop() {
 				highestScoreWs = srvScore
 				index = i
 			}
-
-			if c.cfg.IsDbLogging {
-				go c.db.AddStatus(srv.URL, status.CPU, status.Memory)
-			}
+			log.Println(srv.URL, "CPU:", status.CPU, "MEM:", status.Memory)
 		}
 		c.currentSrvIndex = index
 		c.currentWsSrvIndex = indexWs

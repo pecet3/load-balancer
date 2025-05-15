@@ -1,6 +1,10 @@
+Here's the updated version of the README without the mention of SQLite3 and with a note about the program being lightweight:
+
+---
+
 # loadws-balancer
 
-**loadws-balancer** is a lightweight Go-based load balancer designed to distribute WebSocket and HTTP traffic intelligently across multiple backend servers. It periodically checks the health and performance status of the registered servers and can persist load-related data to a database for analysis and monitoring.
+**loadws-balancer** is a lightweight Go-based load balancer designed to distribute WebSocket and HTTP traffic intelligently across multiple backend servers. It periodically checks the health and performance status of the registered servers, ensuring optimal traffic distribution.
 
 ## 🔧 Configuration
 
@@ -11,7 +15,6 @@ The application requires a `config.yaml` file mounted into the container or pres
 ```yaml
 port: 8080
 statusInterval: 5000 # ms
-isDbLogging: true
 servers:
   - URL: "http://localhost:8082"
     statusURL: "http://localhost:8082/api/statusz"
@@ -26,7 +29,6 @@ servers:
 | ---------------- | ------------------------------------------------------------------------ |
 | `port`           | The port the load balancer listens on.                                   |
 | `statusInterval` | How often (in milliseconds) the servers are polled for CPU/memory stats. |
-| `isDbLogging`    | If `true`, server status logs will be persisted to the local database.   |
 | `servers`        | List of backend servers with their main URL and status endpoint.         |
 
 ---
@@ -37,10 +39,8 @@ The application expects the following structure inside the container or working 
 
 ```
 /app
-└── data
-    ├── config.yaml
-    └── database/
-        └── store.db  # SQLite database (auto-created if not present)
+└── cfg
+    └── config.yaml
 ```
 
 To run in Docker with volume bindings, you can use:
@@ -55,9 +55,9 @@ Make sure `data/config.yaml` exists before starting the container.
 
 ## 🚀 Features
 
-- Dynamic distributing traffic using health/status checks.
-- WebSocket-ready load balancing (if `isWsCandidate` is set).
-- Lightweight (Docker image ~25mb)
+- **Dynamic traffic distribution** using health/status checks.
+- **WebSocket-ready** load balancing (if `isWsCandidate` is set).
+- **Extremely lightweight** (Docker image \~25MB).
 
 ## 🧪 Sample Status Endpoint Implementations
 
