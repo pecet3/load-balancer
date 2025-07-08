@@ -1,7 +1,3 @@
-Here's the updated version of the README without the mention of SQLite3 and with a note about the program being lightweight:
-
----
-
 # loadws-balancer
 
 **loadws-balancer** is a lightweight Go-based load balancer designed to distribute WebSocket and HTTP traffic intelligently across multiple backend servers. It periodically checks the health and performance status of the registered servers, ensuring optimal traffic distribution.
