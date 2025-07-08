@@ -243,4 +243,4 @@ public class StatusController {
 
 ---
 
-# Examples for: node.js, C# and Java wasn't tested!
+### NOTE: Examples for: node.js, C# and Java I didn't test yet :(
